@@ -1305,9 +1305,28 @@
         transition: 0.35s;
       }
 
+      /* arrows and asterisks are drawn as SVG: phones (iOS especially) turn the
+         ↗ and ✳ characters into colourful emoji */
+      .ia {
+        display: inline-block;
+        width: 0.8em;
+        height: 0.8em;
+        vertical-align: -0.06em;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2.4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
       .lk a::after {
-        content: "↗";
-        color: var(--bl2);
+        content: "";
+        align-self: center;
+        width: 14px;
+        height: 14px;
+        background: var(--bl2);
+        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17 17 7M8 7h9v9'/%3E%3C/svg%3E") center / contain no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17 17 7M8 7h9v9'/%3E%3C/svg%3E") center / contain no-repeat;
         transition: transform 0.35s var(--ez);
       }
 
@@ -1605,7 +1624,7 @@
         <div class="beam" aria-hidden="true"></div>
         <div class="lamp" aria-hidden="true"></div>
 
-        <a class="cn tl" href="#home">Faraz Muhammed <em>✳</em></a>
+        <a class="cn tl" href="#home">Faraz Muhammed <em><svg class="ia" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/></svg></em></a>
 
         <div class="note n1">
           <i>× × ×</i>
@@ -1752,7 +1771,7 @@
 
           <div class="hlr">
             <a class="hc rv" href="https://www.behance.net/Farazmuhd" target="_blank" rel="noopener" aria-label="Open Faraz's Behance profile">
-              <div class="lg">Bē <i aria-hidden="true"></i><span class="go2" aria-hidden="true">↗</span></div>
+              <div class="lg">Bē <i aria-hidden="true"></i><span class="go2" aria-hidden="true"><svg class="ia" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></span></div>
               <h4>Published on Behance</h4>
               <p>Sports posters, UI concepts and visual experiments shared with the creative community.</p>
               <div class="shot"><img src="https://farazmuhammed.online/project1.png" alt="" loading="lazy" /></div>
@@ -1777,7 +1796,7 @@
         <div class="w">
           <div class="lab rv">[ <b>Contact</b> ]</div>
           <a class="ct rv" href="mailto:farzmuhd66@gmail.com" aria-label="Email Faraz to discuss a project">
-            Let’s <span class="pill"><img src="https://farazmuhammed.online/farz.jpeg" alt="" loading="lazy" /></span> work <i>together</i> ↗
+            Let’s <span class="pill"><img src="https://farazmuhammed.online/farz.jpeg" alt="" loading="lazy" /></span> work <i>together</i> <svg class="ia" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
           </a>
 
           <div class="two" style="margin-top:46px">
@@ -1829,7 +1848,7 @@
           <small style="color:var(--mu)" id="mc"></small>
           <h3 id="mh" style="font:600 30px/1.1 Poppins;letter-spacing:-.03em;margin:6px 0 12px"></h3>
           <p id="mp" style="color:var(--mu);margin:0"></p>
-          <a class="btn" id="ml" target="_blank" rel="noopener">View on Behance ↗</a>
+          <a class="btn" id="ml" target="_blank" rel="noopener">View on Behance <svg class="ia" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
           <button type="button" class="btn g" id="mx" aria-label="Close project preview">Close</button>
         </div>
       </div>
@@ -1924,7 +1943,7 @@
       ];
 
       $("#pj").innerHTML = PJ.map(function (p, i) {
-        return '<div class="pc rv" data-c="' + p[1] + '" data-i="' + i + '" style="--d:' + (i % 2) + '"><div class="art ir" style="background:' + p[2] + ';--d:' + (i % 2) + '"><img src="' + p[7] + '" alt="' + p[0] + '" loading="lazy"><div class="meta"><h3>' + p[0] + '</h3><span class="tg"><i>' + p[1] + '</i><i>' + p[5].split(" · ")[0] + '</i></span></div><em>↗</em></div></div>';
+        return '<div class="pc rv" data-c="' + p[1] + '" data-i="' + i + '" style="--d:' + (i % 2) + '"><div class="art ir" style="background:' + p[2] + ';--d:' + (i % 2) + '"><img src="' + p[7] + '" alt="' + p[0] + '" loading="lazy"><div class="meta"><h3>' + p[0] + '</h3><span class="tg"><i>' + p[1] + '</i><i>' + p[5].split(" · ")[0] + '</i></span></div><em><svg class="ia" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></em></div></div>';
       }).join("");
 
       /* marquee */
