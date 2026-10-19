@@ -101,28 +101,27 @@
         left: 0;
         top: 0;
         height: 3px;
-        width: 0;
+        width: 100%;
+        transform: scaleX(0);
+        transform-origin: left;
         background: linear-gradient(90deg, var(--bl), var(--bl2));
         z-index: 150;
       }
 
       /* GRAIN */
+      /* static noise: an animated full-screen layer repaints every frame and caused lag */
       .grain {
         position: fixed;
-        inset: -50%;
+        inset: 0;
         pointer-events: none;
         z-index: 60;
-        opacity: 0.06;
+        opacity: 0.05;
         background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-        animation: grain 8s steps(10) infinite;
+        background-size: 180px 180px;
       }
 
-      @keyframes grain {
-        0%, 100% { transform: translate(0, 0); }
-        20% { transform: translate(-5%, 4%); }
-        40% { transform: translate(3%, -6%); }
-        60% { transform: translate(-4%, -2%); }
-        80% { transform: translate(6%, 3%); }
+      @media (hover: none), (max-width: 760px) {
+        .grain { display: none; }
       }
 
       /* LOADER */
@@ -187,9 +186,23 @@
         overflow: hidden;
         isolation: isolate;
         background:
-          radial-gradient(ellipse 60% 50% at var(--lx) var(--ly), rgba(255, 255, 255, 0.07), transparent 70%),
           radial-gradient(ellipse at 50% 120%, #000 20%, transparent 60%),
           #0c0c0d;
+      }
+
+      /* soft pool of light where the beam lands; moved with transform so it never repaints */
+      .pool {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 90vmax;
+        height: 70vmax;
+        margin: -35vmax 0 0 -45vmax;
+        border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(255, 255, 255, 0.07), transparent);
+        pointer-events: none;
+        will-change: transform;
+        z-index: 0;
       }
 
       .cover::after {
@@ -208,41 +221,46 @@
         left: var(--ox, 62%);
         top: var(--oy, 10%);
         pointer-events: none;
-        rotate: var(--ang, 25deg);
+        transform: rotate(25deg);
         opacity: 0;
+        will-change: transform;
       }
 
+      /* the cone's soft edges come from the gradient itself (no blur filter),
+         so rotating it is a cheap GPU transform */
       .beam {
-        width: 64vmax;
-        height: 150vmax;
-        margin-left: -32vmax;
+        width: 80vmax;
+        height: 110vmax;
+        margin-left: -40vmax;
         transform-origin: 50% 0;
-        filter: blur(26px);
-        mix-blend-mode: screen;
+        background: conic-gradient(from 162deg at 50% 0, transparent 0deg, rgba(255, 255, 255, 0.12) 9deg, rgba(255, 255, 255, 0.34) 18deg, rgba(255, 255, 255, 0.12) 27deg, transparent 36deg);
+        -webkit-mask-image: linear-gradient(#000, rgba(0, 0, 0, 0.45) 35%, transparent 78%);
+        mask-image: linear-gradient(#000, rgba(0, 0, 0, 0.45) 35%, transparent 78%);
         z-index: 1;
-      }
-
-      /* clip a child so the parent's blur softens the cone edges */
-      .beam::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.14) 32%, rgba(255, 255, 255, 0.03) 62%, transparent 80%);
-        clip-path: polygon(47% 0, 53% 0, 100% 100%, 0 100%);
       }
 
       .lamp {
         width: 15vmax;
         height: 7vmax;
-        translate: -50% -50%;
+        margin: -3.5vmax 0 0 -7.5vmax;
         border-radius: 50%;
-        background: radial-gradient(ellipse, #fff 0 32%, rgba(255, 255, 255, 0.6) 46%, transparent 70%);
-        filter: blur(5px);
+        background: radial-gradient(closest-side, #fff 0 38%, rgba(255, 255, 255, 0.55) 60%, transparent);
         z-index: 2;
       }
 
       .go .beam { animation: flick 1.6s steps(1) 0.2s forwards; }
       .go .lamp { animation: flick 1.6s steps(1) 0.2s forwards; }
+
+      /* touch screens: gentle GPU-only sway instead of following a cursor */
+      .go .sway .beam,
+      .go .sway .lamp {
+        animation: flick 1.6s steps(1) 0.2s forwards, beamsway 8s ease-in-out 2s infinite alternate;
+      }
+
+      @keyframes beamsway {
+        from { transform: rotate(30deg); }
+        to { transform: rotate(6deg); }
+      }
 
       @keyframes flick {
         0% { opacity: 0; }
@@ -370,8 +388,7 @@
           url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E"),
           #2c2c2f;
         box-shadow: 0 2.4em 4em rgba(0, 0, 0, 0.7), 0 0.4em 1em rgba(0, 0, 0, 0.5);
-        transition: scale 0.5s var(--ez), box-shadow 0.5s, filter 0.5s;
-        filter: brightness(var(--lit, 0.8));
+        transition: scale 0.5s var(--ez), box-shadow 0.5s;
         animation: fall 1.3s cubic-bezier(0.3, 1.25, 0.5, 1) backwards, sway 6s ease-in-out infinite;
         animation-delay: calc(1.2s + var(--i) * 0.18s), calc(2.6s + var(--i) * 0.5s);
         animation-play-state: paused;
@@ -795,8 +812,6 @@
         bottom: 12px;
         font-size: 12px;
         background: rgba(6, 7, 13, 0.6);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
         padding: 5px 12px;
         border-radius: 99px;
         transform: translateY(150%);
@@ -844,8 +859,6 @@
         padding: 10px 14px;
         border-radius: 14px;
         background: rgba(6, 7, 13, 0.5);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
       }
 
       .pic figcaption b {
@@ -1068,9 +1081,7 @@
         border-radius: 99px;
         border: 1px solid rgba(255, 255, 255, 0.55);
         color: rgba(255, 255, 255, 0.9);
-        background: rgba(0, 0, 0, 0.18);
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
+        background: rgba(0, 0, 0, 0.42);
       }
 
       .art em {
@@ -1411,19 +1422,20 @@
       .modal {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.72);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        background: rgba(0, 0, 0, 0.82);
         display: grid;
         place-items: center;
         z-index: 120;
         opacity: 0;
+        visibility: hidden;
         pointer-events: none;
-        transition: 0.35s;
+        transition: opacity 0.35s, visibility 0s 0.35s;
         padding: 20px;
       }
 
       .modal.open {
+        visibility: visible;
+        transition: opacity 0.35s;
         opacity: 1;
         pointer-events: auto;
       }
@@ -1586,6 +1598,7 @@
 
     <main>
       <section class="cover" id="home">
+        <div class="pool" aria-hidden="true"></div>
         <div class="beam" aria-hidden="true"></div>
         <div class="lamp" aria-hidden="true"></div>
 
@@ -1951,7 +1964,7 @@
       addEventListener("scroll", function () {
         setCur();
         var h = document.documentElement;
-        $("#pb").style.width = scrollY / (h.scrollHeight - innerHeight) * 100 + "%";
+        $("#pb").style.transform = "scaleX(" + (scrollY / (h.scrollHeight - innerHeight)).toFixed(4) + ")";
         $("#nv").classList.toggle("on", scrollY > innerHeight * 0.6);
 
         if (st) {
@@ -1964,63 +1977,112 @@
         }
       }, { passive: true });
 
-      /* mouse: spotlight, card parallax */
+      /* mouse: spotlight, card parallax.
+         Everything here only runs while something is actually moving, and only writes
+         transforms (GPU) except the headline mask, so idle pages cost nothing. */
       var cv = $("#home");
       var HL = $(".hl");
       var BOARD = $("#board");
       var PNS = $$(".pn");
-      var mouseAt = -1e9;
-      var PAR = $$("[data-par]");
+      var BEAM = $(".beam");
+      var LAMP = $(".lamp");
+      var POOL = $(".pool");
       var mqx = $("#mqx");
+      var FINE = matchMedia("(hover: hover) and (pointer: fine)").matches;
       var mx = innerWidth / 2;
       var my = innerHeight / 2;
       var gx = mx;
       var gy = my;
       var lastY = scrollY;
       var sk = 0;
+      var running = false;
+      var last = {};
 
+      /* cover/headline geometry, measured on load and resize instead of every frame */
+      var G = {};
+      function measure() {
+        var r = cv.getBoundingClientRect();
+        var h = HL.getBoundingClientRect();
+        G.w = r.width;
+        G.h = r.height;
+        G.top = r.top + scrollY;
+        G.hx = h.left - r.left;
+        G.hy = h.top - r.top;
+        G.ox = r.width * (innerWidth < 760 ? 0.7 : 0.62);
+        G.oy = r.height * 0.1;
+        LAMP.style.left = BEAM.style.left = G.ox + "px";
+        LAMP.style.top = BEAM.style.top = G.oy + "px";
+      }
+
+      /* only touch the DOM when a value really changed */
+      function put(key, el, prop, val) {
+        if (last[key] === val) return;
+        last[key] = val;
+        if (prop.charAt(0) === "-") el.style.setProperty(prop, val);
+        else el.style[prop] = val;
+      }
+
+      function aim(tx, ty) {
+        var ang = Math.atan2(-(tx - G.ox), Math.max(ty - G.oy, 1)) * 180 / Math.PI;
+        var rot = "rotate(" + ang.toFixed(1) + "deg)";
+        put("beam", BEAM, "transform", rot);
+        put("lamp", LAMP, "transform", rot);
+        put("pool", POOL, "transform", "translate3d(" + tx.toFixed(0) + "px," + ty.toFixed(0) + "px,0)");
+        put("mlx", HL, "--mlx", (tx - G.hx).toFixed(0) + "px");
+        put("mly", HL, "--mly", (ty - G.hy).toFixed(0) + "px");
+        if (FINE) {
+          var nx = tx / G.w - 0.5;
+          var ny = ty / G.h - 0.5;
+          put("board", BOARD, "translate", (nx * -18).toFixed(1) + "px " + (ny * -12).toFixed(1) + "px");
+          put("hl", HL, "translate", (nx * 10).toFixed(1) + "px " + (ny * 6).toFixed(1) + "px");
+        }
+      }
+
+      function tick() {
+        var busy = false;
+
+        /* spotlight follows the cursor while the hero is on screen */
+        if (FINE && scrollY < G.top + G.h) {
+          var dx = mx - gx;
+          var dy = my - gy;
+          gx += dx * 0.1;
+          gy += dy * 0.1;
+          aim(gx, gy + scrollY - G.top);
+          busy = Math.abs(dx) + Math.abs(dy) > 0.5;
+        }
+
+        /* scroll-velocity skew on the image strip */
+        var v = scrollY - lastY;
+        lastY = scrollY;
+        sk += (Math.max(Math.min(v * 0.25, 10), -10) - sk) * 0.12;
+        if (Math.abs(sk) < 0.02) sk = 0;
+        put("sk", mqx, "--sk", sk.toFixed(2) + "deg");
+        if (sk !== 0 || v !== 0) busy = true;
+
+        if (busy) requestAnimationFrame(tick);
+        else running = false;
+      }
+
+      function kick() {
+        if (RM || running) return;
+        running = true;
+        requestAnimationFrame(tick);
+      }
+
+      measure();
+      /* start the light resting on the headline */
+      aim(G.w * 0.48, G.hy + HL.offsetHeight * 0.45);
+
+      addEventListener("resize", function () { measure(); aim(G.w * 0.48, G.hy + HL.offsetHeight * 0.45); });
+      addEventListener("scroll", kick, { passive: true });
       addEventListener("mousemove", function (e) {
         mx = e.clientX;
         my = e.clientY;
-        mouseAt = performance.now();
-      });
+        kick();
+      }, { passive: true });
 
-      /* aim the spotlight at the cursor, or let it sway on its own when idle */
-      function lightUp(r) {
-        var t = performance.now();
-        var tx, ty;
-        if (t - mouseAt < 2500 && my < r.bottom) {
-          tx = gx - r.left;
-          ty = gy - r.top;
-        } else {
-          tx = r.width * (0.45 + Math.sin(t / 2600) * 0.22);
-          ty = r.height * (0.55 + Math.sin(t / 1900) * 0.08);
-        }
-        var ox = r.width * (innerWidth < 760 ? 0.7 : 0.62);
-        var oy = r.height * 0.1;
-        var ang = Math.atan2(-(tx - ox), Math.max(ty - oy, 1)) * 180 / Math.PI;
-        cv.style.setProperty("--ang", ang.toFixed(2) + "deg");
-        cv.style.setProperty("--lx", tx.toFixed(0) + "px");
-        cv.style.setProperty("--ly", ty.toFixed(0) + "px");
-
-        var h = HL.getBoundingClientRect();
-        HL.style.setProperty("--mlx", (tx + r.left - h.left).toFixed(0) + "px");
-        HL.style.setProperty("--mly", (ty + r.top - h.top).toFixed(0) + "px");
-
-        var nx = tx / r.width - 0.5;
-        var ny = ty / r.height - 0.5;
-        cv.style.setProperty("--bx", (nx * -18).toFixed(1) + "px");
-        cv.style.setProperty("--by", (ny * -12).toFixed(1) + "px");
-        HL.style.setProperty("--tx", (nx * 10).toFixed(1) + "px");
-        HL.style.setProperty("--ty", (ny * 6).toFixed(1) + "px");
-
-        /* cards near the beam brighten */
-        PNS.forEach(function (p) {
-          var b = p.getBoundingClientRect();
-          var d = Math.hypot(b.left + b.width / 2 - r.left - tx, b.top + b.height / 2 - r.top - ty);
-          p.style.setProperty("--lit", (0.62 + 0.45 * Math.max(0, 1 - d / (r.width * 0.45))).toFixed(2));
-        });
-      }
+      /* touch screens: no cursor to follow, so the beam sways with a CSS animation instead */
+      if (!FINE) cv.classList.add("sway");
 
       /* drag the pinned cards (mouse / pen only so touch can still scroll) */
       PNS.forEach(function (p) {
@@ -2050,32 +2112,6 @@
         p.addEventListener("pointerup", end);
         p.addEventListener("pointercancel", end);
       });
-
-      (function L() {
-        gx += (mx - gx) * 0.08;
-        gy += (my - gy) * 0.08;
-
-        if (!RM) {
-          var r = cv.getBoundingClientRect();
-          if (r.bottom > 0) lightUp(r);
-
-          /* scroll-velocity skew on marquee */
-          var v = scrollY - lastY;
-          lastY = scrollY;
-          sk += (Math.max(Math.min(v * 0.25, 10), -10) - sk) * 0.12;
-          mqx.style.setProperty("--sk", sk.toFixed(2) + "deg");
-
-          /* image parallax */
-          PAR.forEach(function (el) {
-            var b = el.getBoundingClientRect();
-            if (b.bottom < 0 || b.top > innerHeight) return;
-            var off = (b.top + b.height / 2 - innerHeight / 2) * -(+el.dataset.par);
-            el.querySelector("img").style.setProperty("--par", off.toFixed(1) + "px");
-          });
-        }
-
-        requestAnimationFrame(L);
-      })();
 
       /* tilt, magnet */
       $$(".pc").forEach(function (p) {
