@@ -987,6 +987,158 @@
       .sr:hover p,
       .sr:hover span { color: #fff; }
 
+      /* WORKFLOW: 3 steps on a wavy line */
+      .flowhd { text-align: center; margin-bottom: clamp(40px, 6vw, 70px); }
+
+      .flowhd .tagp {
+        display: inline-block;
+        padding: 5px 14px;
+        border: 1px solid var(--bl2);
+        border-radius: 99px;
+        color: #b8beff;
+        font-size: 12px;
+        margin-bottom: 18px;
+      }
+
+      .flowhd h2 {
+        margin: 0 0 14px;
+        font: 500 clamp(30px, 4.4vw, 56px)/1.1 Poppins, sans-serif;
+        letter-spacing: -0.035em;
+      }
+
+      .flowhd p { margin: 0 auto 24px; max-width: 430px; color: var(--mu); font-size: 14.5px; }
+
+      .flowhd .btn { margin: 0; padding: 12px 24px; box-shadow: 0 10px 30px rgba(27, 43, 255, 0.35); }
+
+      .flow {
+        position: relative;
+        aspect-ratio: 1000 / 360;
+        container-type: inline-size;
+      }
+
+      .flow > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+
+      .flow path {
+        fill: none;
+        stroke: var(--bl2);
+        stroke-width: 3;
+        stroke-linecap: round;
+        filter: drop-shadow(0 0 6px rgba(111, 123, 255, 0.45));
+      }
+
+      /* draw the wave from its left endpoint to its right endpoint.
+         pathLength="1" on the path makes one dash exactly the full curve. */
+      .flow path.wave {
+        stroke-dasharray: 1 1.05;
+        stroke-dashoffset: 1.02;
+        opacity: 0;
+        transition: stroke-dashoffset 2.8s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.15s;
+      }
+
+      .flow.drawn path.wave { stroke-dashoffset: 0; opacity: 1; }
+
+      /* instant reset (no reverse animation) before replaying */
+      .flow.reset path.wave,
+      .flow.reset::before { transition: none !important; }
+
+
+
+      .fstep { position: absolute; inset: 0; pointer-events: none; }
+      .fstep > * { pointer-events: auto; }
+
+      .fic {
+        position: absolute;
+        width: 5.6cqw;
+        aspect-ratio: 1;
+        margin: -2.8cqw 0 0 -2.8cqw;
+        border-radius: 1.1cqw;
+        background: #10142e;
+        border: 1px solid rgba(111, 123, 255, 0.35);
+        box-shadow: 0 1cqw 2.4cqw rgba(0, 0, 0, 0.45);
+        display: grid;
+        place-items: center;
+        color: var(--bl2);
+      }
+
+      .fic svg { width: 52%; height: 52%; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+      .fnum {
+        position: absolute;
+        font: 600 13cqw/0.8 Poppins, sans-serif;
+        letter-spacing: -0.05em;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        pointer-events: none;
+        opacity: 0;
+        transform: translateY(2cqw);
+        transition: opacity 0.8s, transform 0.9s var(--ez);
+        transition-delay: var(--dl);
+      }
+
+      .ftx {
+        position: absolute;
+        width: 25cqw;
+        opacity: 0;
+        transform: translateY(1.5cqw);
+        transition: opacity 0.8s, transform 0.9s var(--ez);
+        transition-delay: calc(var(--dl) + 0.15s);
+      }
+
+      .flow.in .fnum,
+      .flow.in .ftx { opacity: 1; transform: none; }
+
+      .ftx h3 { margin: 0 0 0.9cqw; font: 500 clamp(15px, 2cqw, 22px)/1.2 Poppins; letter-spacing: -0.02em; }
+      .ftx p { margin: 0; color: var(--mu); font-size: clamp(12px, 1.3cqw, 14px); line-height: 1.55; }
+
+      /* positions on the curve (x/1000, y/360 of the stage) */
+      .s1 .fic { left: 15%; top: 62.5%; }
+      .s1 .ftx { left: 1%; top: 8%; }
+      .s1 .fnum { left: 26.5%; top: 0%; }
+      .s2 .fic { left: 43%; top: 11%; }
+      .s2 .ftx { left: 32%; top: 62%; }
+      .s2 .fnum { left: 47%; top: 44%; }
+      .s3 .fic { left: 84%; top: 22%; }
+      .s3 .ftx { left: 65%; top: 62%; }
+      .s3 .fnum { left: 86%; top: 44%; }
+
+      /* phones: vertical timeline */
+      @media (max-width: 760px) {
+        .flow { aspect-ratio: auto; display: grid; gap: 34px; padding-left: 30px; }
+        .flow > svg { display: none; }
+        .flow::before {
+          content: "";
+          position: absolute;
+          left: 6px;
+          top: 22px;
+          bottom: 22px;
+          width: 2px;
+          background: linear-gradient(var(--bl2), rgba(111, 123, 255, 0.15));
+          box-shadow: 0 0 6px rgba(111, 123, 255, 0.45);
+          transform: scaleY(0);
+          transform-origin: top;
+          transition: transform 2.4s cubic-bezier(0.65, 0, 0.35, 1);
+        }
+
+        .flow.drawn::before { transform: none; }
+
+        .fstep { position: relative; inset: auto; }
+        .fic,
+        .s1 .fic,
+        .s2 .fic,
+        .s3 .fic { left: -58px; top: 0; width: 44px; margin: 0; border-radius: 12px; }
+        .fnum,
+        .s1 .fnum,
+        .s2 .fnum,
+        .s3 .fnum { left: auto; right: 0; top: -6px; font-size: 64px; }
+        .ftx,
+        .s1 .ftx,
+        .s2 .ftx,
+        .s3 .ftx { position: relative; left: 0; top: 0; width: auto; padding-right: 50px; }
+        .ftx h3 { margin-bottom: 6px; padding-top: 10px; }
+      }
+
       /* PROJECTS: carousel with one large centre card and blurred cards peeking at the sides */
       .wh {
         display: flex;
@@ -1654,6 +1806,9 @@
         .hl i b,
         .note,
         .bk { transform: none; }
+        .flow .fic, .flow .fnum, .flow .ftx { transform: none; opacity: 1; }
+        .flow path.wave { stroke-dashoffset: 0; opacity: 1; }
+        .flow::before { transform: none !important; }
         .st span { opacity: 1; }
         .pill { width: 1.7em; }
       }
@@ -1809,6 +1964,47 @@
           <div class="lab rv">[ <b>Expertise</b> ]</div>
           <h2 class="rv">My <i>expertise</i></h2>
           <div id="sk"></div>
+        </div>
+      </section>
+
+      <section class="s" id="process">
+        <div class="w">
+          <div class="flowhd">
+            <span class="tagp rv">How I Work</span>
+            <h2 class="rv" style="--d:1">My simple 3 step workflow</h2>
+            <p class="rv" style="--d:2">No confusing process, no surprises. Here is exactly what happens when you work with me.</p>
+            <div class="rv" style="--d:3"><a class="btn mag" href="#contact">Start a project</a></div>
+          </div>
+
+          <div class="flow rv" id="flow">
+            <svg viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true">
+              <path class="wave" pathLength="1" d="M0 200 C 60 212, 100 225, 150 225 C 270 225, 320 40, 430 40 C 525 40, 560 185, 645 185 C 730 185, 765 78, 840 79 C 872 80, 892 92, 905 100" />
+            </svg>
+
+            <div class="fstep s1" style="--dl:0.5s">
+              <span class="fnum" aria-hidden="true">1</span>
+              <div class="ftx">
+                <h3>Discover &amp; Research</h3>
+                <p>We talk about your goals, audience and ideas. I research, plan and sketch wireframes so we agree on the direction before designing.</p>
+              </div>
+            </div>
+
+            <div class="fstep s2" style="--dl:1.2s">
+              <span class="fnum" aria-hidden="true">2</span>
+              <div class="ftx">
+                <h3>Design &amp; Prototype</h3>
+                <p>I craft the visuals and clickable prototypes in Figma or Photoshop, refining them with your feedback until it feels just right.</p>
+              </div>
+            </div>
+
+            <div class="fstep s3" style="--dl:1.9s">
+              <span class="fnum" aria-hidden="true">3</span>
+              <div class="ftx">
+                <h3>Build &amp; Deliver</h3>
+                <p>I build it responsive and fast with HTML, CSS and JavaScript, or hand over print-ready files, then help you launch with confidence.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -2146,6 +2342,45 @@
           FAN.querySelectorAll(".bk.up").forEach(function (b) { b.classList.remove("up"); });
           FAN.classList.remove("has-up");
         });
+      }
+
+      /* process line: draw it when the section scrolls into view, and replay it the next
+         time it comes back. A draw that's still running is never cut short. */
+      var FLOW = $("#flow");
+      if (FLOW && "IntersectionObserver" in window) {
+        var drawing = false;
+        var visible = false;
+        var DRAW_MS = 2900;
+
+        function resetFlow() {
+          FLOW.classList.add("reset");
+          FLOW.classList.remove("drawn");
+          void FLOW.offsetWidth;
+          FLOW.classList.remove("reset");
+        }
+
+        var flowIO = new IntersectionObserver(function (es) {
+          es.forEach(function (e) {
+            visible = e.isIntersecting;
+            /* start once a good part of the line is on screen */
+            if (e.intersectionRatio >= 0.35 && !FLOW.classList.contains("drawn")) {
+              FLOW.classList.add("drawn");
+              drawing = true;
+              setTimeout(function () {
+                drawing = false;
+                /* the user scrolled away while it was drawing: get ready to replay */
+                if (!visible) resetFlow();
+              }, DRAW_MS);
+            } else if (!e.isIntersecting && FLOW.classList.contains("drawn") && !drawing) {
+              /* fully out of view: reset instantly so it can draw again */
+              resetFlow();
+            }
+          });
+        }, { threshold: [0, 0.35] });
+
+        flowIO.observe(FLOW);
+      } else if (FLOW) {
+        FLOW.classList.add("drawn");
       }
 
       /* scroll in-page links with script: plain #hash jumps do nothing when the page
