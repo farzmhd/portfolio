@@ -736,8 +736,20 @@
       }
 
       .fan.in .bk { transform: none; }
-      .fan.in .bk:hover { transform: translateY(-16%) rotate(calc(var(--r) * -0.4)); transition-delay: 0s; transition-duration: 0.6s; z-index: 9; }
-      .fan.in:hover .bk:not(:hover) { filter: brightness(0.55); }
+      @media (hover: hover) and (pointer: fine) {
+        .fan.in .bk:hover { transform: translateY(-16%) rotate(calc(var(--r) * -0.4)); transition-delay: 0s; transition-duration: 0.6s; z-index: 9; }
+        .fan.in:hover .bk:not(:hover) { filter: brightness(0.55); }
+      }
+
+      /* touch screens: a tap lifts the card (with a little bounce) instead of jumping away */
+      .fan.in .bk.up {
+        transform: translateY(-22%) rotate(calc(var(--r) * -0.6)) scale(1.06);
+        transition: transform 0.7s cubic-bezier(0.3, 1.5, 0.5, 1), filter 0.4s;
+        transition-delay: 0s;
+        z-index: 9;
+      }
+
+      .fan.in.has-up .bk:not(.up) { filter: brightness(0.5); }
 
       .bk img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -975,135 +987,173 @@
       .sr:hover p,
       .sr:hover span { color: #fff; }
 
-      /* PROJECTS: featured works grid */
+      /* PROJECTS: carousel with one large centre card and blurred cards peeking at the sides */
       .wh {
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
         gap: 20px;
-        margin-bottom: 30px;
+        margin-bottom: 34px;
       }
 
-      .wh h2 { margin: 0; }
+      .wh h2 {
+        margin: 0;
+        font: 500 clamp(30px, 3.6vw, 48px)/1.12 Poppins, sans-serif;
+        letter-spacing: -0.035em;
+      }
 
       .allw {
         flex: none;
         display: inline-flex;
         align-items: center;
-        gap: 10px;
-        padding: 10px 18px;
+        gap: 8px;
+        padding: 9px 16px;
         border-radius: 99px;
         background: rgba(255, 255, 255, 0.06);
         border: 1px solid var(--ln);
-        font-size: 13px;
+        font-size: 12.5px;
         transition: background 0.3s, border-color 0.3s;
       }
 
-      .allw span { transition: transform 0.35s var(--ez); }
       .allw:hover { background: var(--bl); border-color: var(--bl); }
-      .allw:hover span { transform: translateX(4px); }
 
-      .pj {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
+      /* --w: centre card width, --s: visible slice of each side card, --g: gap (all % of the track) */
+      .car {
+        --w: 50;
+        --s: 24;
+        --g: 1.2;
+        position: relative;
+        overflow: hidden;
+        overflow: clip;
+        aspect-ratio: calc(100 / (var(--w) / 1.25));
+        touch-action: pan-y;
+        user-select: none;
       }
 
-      .pc {
+      .cc {
+        position: absolute;
+        top: 0;
+        left: calc((100% - var(--w) * 1%) / 2);
+        width: calc(var(--w) * 1%);
+        height: 100%;
+        overflow: hidden;
+        border-radius: 14px;
         cursor: pointer;
-        transition: transform 0.15s, opacity 0.9s;
+        transform: translateX(var(--tx, 0%));
+        clip-path: inset(0 var(--cr, 0%) 0 var(--cl, 0%) round 14px);
+        filter: blur(var(--bl, 0px)) brightness(var(--br, 1));
+        opacity: var(--op, 1);
+        transition: transform 0.8s var(--ez), clip-path 0.8s var(--ez), filter 0.8s, opacity 0.6s;
         will-change: transform;
       }
 
-      .art {
-        position: relative;
-        overflow: hidden;
-        aspect-ratio: 1.3;
-        border-radius: 22px;
-        transition: clip-path 1.3s var(--ex);
+      .cc img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
+
+      .cc[data-pos="0"] { z-index: 2; }
+
+      .cc[data-pos="-1"] {
+        --tx: calc(-100% - var(--g) / var(--w) * 100%);
+        --cl: calc((var(--w) - var(--s)) / var(--w) * 100%);
+        --bl: 7px;
+        --br: 0.85;
       }
 
-      .art img {
-        position: absolute;
-        inset: 0;
-        object-position: center 22%;
-        transition: scale 1.8s var(--ez), filter 0.6s;
+      .cc[data-pos="1"] {
+        --tx: calc(100% + var(--g) / var(--w) * 100%);
+        --cr: calc((var(--w) - var(--s)) / var(--w) * 100%);
+        --bl: 7px;
+        --br: 0.85;
       }
 
-      .pc:hover .art.in img { scale: 1.18; transition-duration: 1.1s; }
+      .cc[data-pos="-2"] { --tx: -210%; --op: 0; pointer-events: none; }
+      .cc[data-pos="2"] { --tx: 210%; --op: 0; pointer-events: none; }
+      .cc[data-pos="hide"] { --op: 0; pointer-events: none; }
 
-      /* dark fade so the title stays readable */
-      .art::before {
+      @media (hover: hover) and (pointer: fine) {
+        .cc[data-pos="-1"]:hover,
+        .cc[data-pos="1"]:hover { --bl: 3px; --br: 1; }
+      }
+
+      /* caption on the centre card */
+      .cc::after {
         content: "";
         position: absolute;
-        inset: 45% 0 0;
-        z-index: 2;
-        background: linear-gradient(transparent, rgba(0, 0, 0, 0.72));
+        inset: 40% 0 0;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
         pointer-events: none;
       }
 
-      .art::after {
-        content: "";
+      .cap {
         position: absolute;
-        inset: 0;
+        left: 6%;
+        right: 6%;
+        bottom: 6%;
         z-index: 2;
-        background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.28), transparent 50%);
-        opacity: 0;
-        transition: 0.3s;
-      }
-
-      .pc:hover .art::after { opacity: 1; }
-
-      .meta {
-        position: absolute;
-        left: 18px;
-        right: 80px;
-        bottom: 16px;
-        z-index: 3;
-        transition: transform 0.6s var(--ez);
-      }
-
-      .pc:hover .meta { transform: translateY(-6px); }
-
-      .meta h3 {
-        margin: 0 0 8px;
-        font: 500 clamp(15px, 1.5vw, 19px)/1.2 Poppins;
-        letter-spacing: -0.02em;
+        display: flex;
+        align-items: flex-end;
+        gap: 20px;
         color: #fff;
+        opacity: 0;
+        transform: translateY(12px);
+        transition: opacity 0.5s, transform 0.6s var(--ez);
       }
 
-      .tg { display: flex; flex-wrap: wrap; gap: 6px; }
+      .cc[data-pos="0"] .cap { opacity: 1; transform: none; transition-delay: 0.35s; }
 
-      .tg i {
-        font-style: normal;
-        font-size: 11px;
-        padding: 3px 11px;
+      .cap q {
+        display: block;
+        margin-bottom: 10px;
+        font: 500 clamp(15px, 1.6vw, 21px)/1.3 Poppins;
+        letter-spacing: -0.02em;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .cap b { display: block; font: 500 12.5px/1.3 Poppins; }
+      .cap small { display: block; font-size: 11.5px; opacity: 0.7; }
+
+      .cap em {
+        margin-left: auto;
+        flex: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font: normal 600 13px/1 Poppins;
+        letter-spacing: -0.01em;
+        transition: gap 0.3s;
+      }
+
+      .cap em .ia { width: 12px; height: 12px; }
+      .cc[data-pos="0"]:hover .cap em { gap: 10px; }
+
+      /* progress dots */
+      .cdots {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 22px;
+      }
+
+      .cdots button {
+        width: 8px;
+        height: 8px;
+        padding: 0;
+        border: 0;
         border-radius: 99px;
-        border: 1px solid rgba(255, 255, 255, 0.55);
-        color: rgba(255, 255, 255, 0.9);
-        background: rgba(0, 0, 0, 0.42);
+        background: rgba(255, 255, 255, 0.22);
+        cursor: pointer;
+        transition: width 0.4s var(--ez), background 0.3s;
       }
 
-      .art em {
-        position: absolute;
-        right: 16px;
-        bottom: 16px;
-        z-index: 3;
-        width: 46px;
-        height: 46px;
-        border-radius: 50%;
-        background: #fff;
-        color: var(--bl);
-        display: grid;
-        place-items: center;
-        font-style: normal;
-        font-size: 18px;
-        scale: 0;
-        rotate: -90deg;
-        transition: scale 0.5s var(--ez), rotate 0.5s var(--ez);
-      }
+      .cdots button.on { width: 26px; background: var(--bl2); }
 
-      .pc:hover .art em { scale: 1; rotate: 0deg; }
+      @media (max-width: 760px) {
+        .car { --w: 76; --s: 11; --g: 1.5; }
+        .cap q { font-size: 14px; }
+        .wh { align-items: flex-start; flex-direction: column; }
+      }
 
       /* highlight row under the grid */
       .hlr {
@@ -1461,34 +1511,19 @@
         pointer-events: auto;
       }
 
+      /* image-only lightbox: the artwork is centred and scaled to fit the screen */
       .mb {
-        background: #0b0e24;
-        border: 1px solid var(--ln);
-        border-radius: 26px;
-        max-width: 1000px;
-        width: 100%;
-        max-height: calc(100vh - 40px);
-        overflow: auto;
-        transform: translateY(50px) scale(0.94);
-        transition: 0.5s var(--ez);
-        display: grid;
-        grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-        align-items: center;
-      }
-
-      .modal.open .mb { transform: none; }
-
-      /* show the whole artwork, never cropped */
-      .mb .art {
-        aspect-ratio: auto;
-        height: calc(100vh - 42px);
-        max-height: 860px;
-        border-radius: 0;
+        position: relative;
         display: grid;
         place-items: center;
-        background: #05060c !important;
-        clip-path: inset(0 0 100% 0);
-        transition: clip-path 0.9s var(--ex) 0.15s;
+      }
+
+
+      .mb .art {
+        aspect-ratio: auto;
+        overflow: visible;
+        border-radius: 0;
+        background: none !important;
       }
 
       .mb .art::before,
@@ -1496,23 +1531,47 @@
 
       .mb .art img {
         position: static;
-        width: 100%;
-        height: 100%;
+        display: block;
+        width: auto;
+        height: auto;
+        max-width: min(92vw, 1100px);
+        max-height: calc(100svh - 110px);
         object-fit: contain;
-        scale: 1.08;
-        transition: scale 1.4s var(--ez) 0.15s;
+        border-radius: 14px;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
       }
 
-      @media (max-width: 760px) {
-        .mb { grid-template-columns: 1fr; }
-        .mb .art { height: auto; max-height: 62vh; }
-        .mb .art img { height: auto; max-height: 62vh; }
+
+      /* title + links kept for screen readers only */
+      .mb .in2 {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
       }
 
-      .modal.open .mb .art { clip-path: inset(0 0 0 0); }
-      .modal.open .mb .art img { scale: 1; }
+      .lbx {
+        position: fixed;
+        top: 18px;
+        right: 18px;
+        z-index: 2;
+        width: 46px;
+        height: 46px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition: background 0.3s, rotate 0.4s var(--ez);
+      }
 
-      .mb .in2 { padding: 24px 28px 30px; }
+      .lbx:hover { background: var(--bl); rotate: 90deg; }
+      .lbx svg { width: 18px; height: 18px; }
+
 
       .toast {
         position: fixed;
@@ -1697,12 +1756,6 @@
         </div>
       </section>
 
-      <div class="mq" aria-hidden="true">
-        <div class="mqx" id="mqx">
-          <div class="mqt rev" id="mqi"></div>
-        </div>
-      </div>
-
       <section class="s" id="about">
         <div class="w">
           <div class="lab rv">[ <b>About</b> ]</div>
@@ -1763,11 +1816,12 @@
         <div class="w">
           <div class="lab rv">[ <b>Selected</b> ] 2026</div>
           <div class="wh">
-            <h2 class="rv">Featured <i>works</i></h2>
-            <a class="allw rv" href="https://www.behance.net/Farazmuhd" target="_blank" rel="noopener">All works <span>→</span></a>
+            <h2 class="rv">Selected works,<br />crafted with care</h2>
+            <a class="allw rv" href="https://www.behance.net/Farazmuhd" target="_blank" rel="noopener">View all works</a>
           </div>
 
-          <div class="pj" id="pj"></div>
+          <div class="car rv" id="car" role="region" aria-roledescription="carousel" aria-label="Selected works"></div>
+          <div class="cdots" id="cdots" role="tablist" aria-label="Choose a project"></div>
 
           <div class="hlr">
             <a class="hc rv" href="https://www.behance.net/Farazmuhd" target="_blank" rel="noopener" aria-label="Open Faraz's Behance profile">
@@ -1842,6 +1896,7 @@
     </footer>
 
     <div class="modal" id="md" role="dialog" aria-modal="true" aria-labelledby="mh">
+      <button type="button" class="lbx" id="lbx" aria-label="Close image"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
       <div class="mb">
         <div class="art" id="mt"></div>
         <div class="in2">
@@ -1942,22 +1997,98 @@
         ["Real Madrid Strike Poster", "Graphic", "linear-gradient(135deg,#e9e9ec,#9aa0b5)", "#1b2bff", "A clean, high-key Real Madrid design set inside the Bernabéu, blending a monochrome portrait with a dynamic action cut-out.", "Photoshop · Photo Manipulation · Typography", "https://www.behance.net/Farazmuhd", IMG.madrid]
       ];
 
-      $("#pj").innerHTML = PJ.map(function (p, i) {
-        return '<div class="pc rv" data-c="' + p[1] + '" data-i="' + i + '" style="--d:' + (i % 2) + '"><div class="art ir" style="background:' + p[2] + ';--d:' + (i % 2) + '"><img src="' + p[7] + '" alt="' + p[0] + '" loading="lazy"><div class="meta"><h3>' + p[0] + '</h3><span class="tg"><i>' + p[1] + '</i><i>' + p[5].split(" · ")[0] + '</i></span></div><em><svg class="ia" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></em></div></div>';
+      /* works carousel: centre card + blurred neighbours; click a side card, swipe,
+         use the dots or arrow keys to move; it also advances by itself */
+      var CAR = $("#car");
+      var DOTS = $("#cdots");
+      var cur = 0;
+
+      CAR.innerHTML = PJ.map(function (p, i) {
+        var line = p[4].split(/(?<=\.)\s/)[0];
+        return '<div class="cc" data-i="' + i + '" style="background:' + p[2] + '"><img src="' + p[7] + '" alt="' + p[0] + '" loading="lazy"><div class="cap"><div><q>' + line + '</q><b>' + p[0] + '</b><small>' + p[1] + ' · ' + p[5].split(" · ")[0] + '</small></div><em>View <svg class="ia" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></em></div></div>';
       }).join("");
 
-      /* marquee */
-      var tiles = [
-        ["p", IMG.g1, "Matchday Poster"],
-        ["p", IMG.purple, "Concert Collage"],
-        ["p", IMG.g2, "CR7 “The GOAT”"],
-        ["p", IMG.dortmund, "Dortmund vs Barça"],
-        ["p", IMG.madrid, "Real Madrid Strike"]
-      ];
-      var tileHTML = tiles.concat(tiles).map(function (t) {
-        return '<div class="tile ' + t[0] + '"><img src="' + t[1] + '" alt="" loading="lazy"><span>' + t[2] + '</span></div>';
+      DOTS.innerHTML = PJ.map(function (p, i) {
+        return '<button type="button" role="tab" aria-label="' + p[0] + '"></button>';
       }).join("");
-      $("#mqi").innerHTML = tileHTML + tileHTML;
+
+      var CC = CAR.querySelectorAll(".cc");
+      var DB = DOTS.querySelectorAll("button");
+      var N = PJ.length;
+
+      function show(n) {
+        cur = (n + N) % N;
+        CC.forEach(function (c, i) {
+          var d = i - cur;
+          if (d > N / 2) d -= N;
+          if (d < -N / 2) d += N;
+          c.dataset.pos = Math.abs(d) <= 2 ? d : "hide";
+          c.setAttribute("aria-hidden", d === 0 ? "false" : "true");
+        });
+        DB.forEach(function (b, i) {
+          b.classList.toggle("on", i === cur);
+          b.setAttribute("aria-selected", i === cur);
+        });
+      }
+
+      function openWork(i) {
+        var d = PJ[i];
+        $("#mt").innerHTML = '<img src="' + d[7] + '" alt="' + d[0] + '">';
+        $("#mc").textContent = d[1] + " · " + d[5];
+        $("#mh").textContent = d[0];
+        $("#mp").textContent = d[4];
+        $("#ml").href = d[6];
+        $("#md").classList.add("open");
+      }
+
+      CAR.addEventListener("click", function (e) {
+        var c = e.target.closest(".cc");
+        if (!c || moved) return;
+        var pos = +c.dataset.pos;
+        if (pos === 0) openWork(+c.dataset.i);
+        else { show(cur + pos); restart(); }
+      });
+
+      DB.forEach(function (b, i) {
+        b.addEventListener("click", function () { show(i); restart(); });
+      });
+
+      /* swipe */
+      var sx = null, moved = false;
+      CAR.addEventListener("pointerdown", function (e) { sx = e.clientX; moved = false; });
+      CAR.addEventListener("pointermove", function (e) { if (sx !== null && Math.abs(e.clientX - sx) > 8) moved = true; });
+      CAR.addEventListener("pointerup", function (e) {
+        if (sx === null) return;
+        var dx = e.clientX - sx;
+        sx = null;
+        if (Math.abs(dx) > 40) { show(cur + (dx < 0 ? 1 : -1)); restart(); }
+        setTimeout(function () { moved = false; }, 0);
+      });
+      CAR.addEventListener("pointercancel", function () { sx = null; });
+
+      addEventListener("keydown", function (e) {
+        if ($("#md").classList.contains("open")) return;
+        var r = CAR.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > innerHeight) return;
+        if (e.key === "ArrowRight") { show(cur + 1); restart(); }
+        if (e.key === "ArrowLeft") { show(cur - 1); restart(); }
+      });
+
+      /* autoplay, paused while hovering or when the tab is hidden */
+      var timer = null, paused = false;
+      function restart() {
+        clearInterval(timer);
+        if (RM) return;
+        timer = setInterval(function () {
+          if (!paused && !document.hidden && !$("#md").classList.contains("open")) show(cur + 1);
+        }, 4500);
+      }
+      CAR.addEventListener("mouseenter", function () { paused = true; });
+      CAR.addEventListener("mouseleave", function () { paused = false; });
+
+      show(0);
+      restart();
+
 
       /* word-by-word light-up for the About statement (skipped if the section is removed) */
       var st = $("#st");
@@ -1995,6 +2126,27 @@
       /* a fully clipped .ir never registers as intersecting, so watch its parent */
       $$(".rv, .fan").forEach(function (e) { io.observe(e); });
       $$(".ir").forEach(function (e) { io.observe(e.parentElement); });
+
+      /* fan cards on touch screens: tapping lifts a card instead of following its link */
+      var FAN = $("#fan");
+      if (FAN && !matchMedia("(hover: hover) and (pointer: fine)").matches) {
+        FAN.addEventListener("click", function (e) {
+          var card = e.target.closest(".bk");
+          if (!card) return;
+          e.preventDefault();
+          e.stopPropagation();
+          var lift = !card.classList.contains("up");
+          FAN.querySelectorAll(".bk.up").forEach(function (b) { b.classList.remove("up"); });
+          card.classList.toggle("up", lift);
+          FAN.classList.toggle("has-up", lift);
+        });
+        /* tapping anywhere else drops the card back */
+        document.addEventListener("click", function (e) {
+          if (e.target.closest("#fan")) return;
+          FAN.querySelectorAll(".bk.up").forEach(function (b) { b.classList.remove("up"); });
+          FAN.classList.remove("has-up");
+        });
+      }
 
       /* scroll in-page links with script: plain #hash jumps do nothing when the page
          is opened as a standalone file or preview, and this keeps the nav offset */
@@ -2057,7 +2209,6 @@
       var BEAM = $(".beam");
       var LAMP = $(".lamp");
       var POOL = $(".pool");
-      var mqx = $("#mqx");
       var FINE = matchMedia("(hover: hover) and (pointer: fine)").matches;
       var mx = innerWidth / 2;
       var my = innerHeight / 2;
@@ -2120,14 +2271,6 @@
           aim(gx, gy + scrollY - G.top);
           busy = Math.abs(dx) + Math.abs(dy) > 0.5;
         }
-
-        /* scroll-velocity skew on the image strip */
-        var v = scrollY - lastY;
-        lastY = scrollY;
-        sk += (Math.max(Math.min(v * 0.25, 10), -10) - sk) * 0.12;
-        if (Math.abs(sk) < 0.02) sk = 0;
-        put("sk", mqx, "--sk", sk.toFixed(2) + "deg");
-        if (sk !== 0 || v !== 0) busy = true;
 
         if (busy) requestAnimationFrame(tick);
         else running = false;
@@ -2244,7 +2387,9 @@
       });
 
       $("#mx").onclick = function () { $("#md").classList.remove("open"); };
-      $("#md").onclick = function (e) { if (e.target.id === "md") $("#md").classList.remove("open"); };
+      $("#lbx").onclick = function () { $("#md").classList.remove("open"); };
+      /* clicking anywhere outside the image closes it */
+      $("#md").onclick = function (e) { if (!e.target.closest(".art img")) $("#md").classList.remove("open"); };
       addEventListener("keydown", function (e) { if (e.key === "Escape") $("#md").classList.remove("open"); });
 
       /* contact */
