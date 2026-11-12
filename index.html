@@ -387,6 +387,75 @@
         .cv-bar button[data-tool="hand"] { display: none; }
       }
 
+      /* the layer visitors draw on with Shape, Pen and Text */
+      .cv-ink {
+        position: absolute; inset: 0; z-index: 4; pointer-events: none;
+        translate: var(--pnx) var(--pny);
+      }
+      .cv-ink svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+      .cv-ink path { fill: none; stroke: var(--lime); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+
+      .cv-shape {
+        position: absolute; width: var(--s); height: var(--s); margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+        background: var(--c); rotate: var(--r);
+        box-shadow: 0 18px 40px rgba(5, 15, 80, 0.35);
+        animation: cvpop 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+      }
+      .cv-shape.circle { border-radius: 50%; }
+      .cv-shape.square { border-radius: 22%; }
+      .cv-shape.pill { height: calc(var(--s) * 0.5); border-radius: 999px; }
+      .cv-shape.tri { clip-path: polygon(50% 4%, 96% 92%, 4% 92%); box-shadow: none; }
+      @keyframes cvpop { from { scale: 0; } }
+
+      .cv-text {
+        position: absolute; pointer-events: auto; min-width: 1ch; padding: 2px 6px; outline: none;
+        font: 900 42px/1 Archivo, "Arial Black", sans-serif; font-stretch: 112%; text-transform: uppercase; color: #fff;
+        text-shadow: 0 6px 18px rgba(5, 15, 80, 0.3); cursor: text; user-select: text;
+        box-shadow: inset 0 0 0 1.5px transparent;
+      }
+      .cv-text:focus { box-shadow: inset 0 0 0 1.5px var(--lime); }
+      .cv-ink .bye { transition: opacity 0.3s, scale 0.3s; opacity: 0; scale: 0.6; }
+
+      /* cursors for each tool */
+      .cv.t-shape, .cv.t-pen { cursor: crosshair; }
+      .cv.t-text { cursor: text; }
+      .cv.t-shape .cv-sel, .cv.t-pen .cv-sel, .cv.t-text .cv-sel { cursor: inherit; }
+      .cv.t-pen { touch-action: none; }
+
+      .cv.nomenu .cv-menu { opacity: 0; transform: translateY(12px) scale(0.96); pointer-events: none; transition-delay: 0s; }
+
+      /* Dev mode: the headline's real CSS, read live from the page */
+      .cv-dev {
+        position: absolute; right: 32px; bottom: 96px; z-index: 5; width: 300px; padding: 14px 16px; border-radius: 12px;
+        background: #121318; color: #c9cbd6; box-shadow: 0 24px 60px rgba(5, 15, 80, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+        font: 12px/1.75 ui-monospace, "SFMono-Regular", Consolas, monospace;
+        opacity: 0; transform: translateY(10px); pointer-events: none; transition: opacity 0.3s, transform 0.4s var(--ez);
+      }
+      .cv.dev .cv-dev { opacity: 1; transform: none; pointer-events: auto; user-select: text; }
+      .cv-dev b { display: block; margin-bottom: 4px; color: #fff; font-weight: 600; }
+      .cv-dev .k { color: #7fb2ff; }
+      .cv-dev .v { color: var(--lime); }
+      .cv.dev .cv-sel { outline: 1px dashed rgba(255, 255, 255, 0.55); outline-offset: -12px; }
+
+      .cv-bar button[data-tool="eraser"]:active { background: rgba(255, 90, 120, 0.3); }
+
+      @media (max-width: 860px) {
+        .cv-dev { right: 16px; bottom: 90px; width: 260px; }
+      }
+
+      /* phones: touch scrolls the page, so keep the tap-friendly tools only */
+      @media (max-width: 600px) {
+        .cv-bar { gap: 2px; padding: 5px; }
+        .cv-bar button { width: 38px; height: 38px; }
+        .cv-bar button[data-tool="move"],
+        .cv-bar button[data-tool="pen"],
+        .cv-bar button[data-tool="comment"],
+        .cv-bar button[data-tool="components"],
+        .cv-bar .sep:first-of-type { display: none; }
+        .cv-share { padding: 0 12px; }
+        .cv-dev { position: fixed; left: 16px; right: 16px; bottom: 96px; width: auto; }
+      }
+
       /* PAGE LAYOUT */
       .nv {
         position: fixed;
@@ -1672,6 +1741,7 @@
         <div class="cv-grid" aria-hidden="true"></div>
         <div class="cv-cols" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <div class="cv-light" aria-hidden="true"></div>
+        <div class="cv-ink" id="cvInk"><svg id="cvPen" aria-hidden="true"></svg></div>
 
         <div class="cv-top">
           <a class="cv-me" href="#home">Faraz Muhammed <svg class="ia" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/></svg></a>
@@ -1718,13 +1788,22 @@
           </div>
         </div>
 
+        <div class="cv-dev" id="cvDev" aria-live="polite"></div>
+
         <span class="cv-you" id="cvYou" aria-hidden="true">You</span>
 
         <div class="cv-bar" role="toolbar" aria-label="Canvas tools">
-          <button type="button" data-tool="move" aria-pressed="true" aria-label="Move tool, V" data-tip="Move · V"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="fill" d="M5 3.5 19.5 10l-6.2 2.2L11 18.5z"/></svg></button>
-          <button type="button" data-tool="hand" aria-pressed="false" aria-label="Hand tool, H" data-tip="Hand · H"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v5M11 11V4.5a1.5 1.5 0 0 1 3 0V11M14 11V6a1.5 1.5 0 0 1 3 0v7.5a6.5 6.5 0 0 1-6.5 6.5h-.6a6 6 0 0 1-4.8-2.4l-2.4-3.3a1.5 1.5 0 0 1 2.4-1.8L8 14"/></svg></button>
+          <button type="button" data-tool="move" aria-pressed="true" aria-label="Move, V" data-tip="Move · V"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="fill" d="M5 3.5 19.5 10l-6.2 2.2L11 18.5z"/></svg></button>
+          <button type="button" data-tool="hand" aria-pressed="false" aria-label="Hand, H" data-tip="Hand · H"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 13V6a1.5 1.5 0 0 1 3 0v5M11 11V4.5a1.5 1.5 0 0 1 3 0V11M14 11V6a1.5 1.5 0 0 1 3 0v7.5a6.5 6.5 0 0 1-6.5 6.5h-.6a6 6 0 0 1-4.8-2.4l-2.4-3.3a1.5 1.5 0 0 1 2.4-1.8L8 14"/></svg></button>
           <button type="button" data-tool="frame" aria-pressed="false" aria-label="Layout grid, F" data-tip="Layout grid · F"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v18M16 3v18M3 8h18M3 16h18"/></svg></button>
+          <button type="button" data-tool="shape" aria-pressed="false" aria-label="Shape, O" data-tip="Shape · O"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/></svg></button>
+          <button type="button" data-tool="pen" aria-pressed="false" aria-label="Pen, P" data-tip="Pen · P"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19.5 19.5 12l2 2-7.5 7.5zM18 13l-1.5-7.5L3 3l2.5 13.5L13 18zM3 3l7 7"/><circle cx="11.5" cy="11.5" r="1.8"/></svg></button>
+          <button type="button" data-tool="text" aria-pressed="false" aria-label="Text, T" data-tip="Text · T"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7V4.5h14V7M12 4.5v15M9 19.5h6"/></svg></button>
           <button type="button" data-tool="comment" aria-pressed="true" aria-label="Comments, C" data-tip="Comments · C"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8.5 8.5 0 0 1-12.4 7.6L3.5 20.5l1.4-4.4A8.5 8.5 0 1 1 20.5 11.5z"/></svg></button>
+          <button type="button" data-tool="components" aria-pressed="true" aria-label="Components menu, K" data-tip="Components · K"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 3.5 3.5 3.5L7 10.5 3.5 7zM17 3.5l3.5 3.5-3.5 3.5L13.5 7zM7 13.5l3.5 3.5L7 20.5 3.5 17zM17 13.5l3.5 3.5-3.5 3.5-3.5-3.5z"/></svg></button>
+          <i class="sep" aria-hidden="true"></i>
+          <button type="button" data-tool="eraser" aria-label="Clear drawings, E" data-tip="Clear drawings · E"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 20h12M5.6 14.4l8.5-8.5a2 2 0 0 1 2.8 0l2.2 2.2a2 2 0 0 1 0 2.8L11 19a2 2 0 0 1-1.4.6H8.4a2 2 0 0 1-1.4-.6l-1.4-1.4a2 2 0 0 1 0-2.8zM9.5 10.5l5 5"/></svg></button>
+          <button type="button" data-tool="dev" aria-pressed="false" aria-label="Dev mode, D" data-tip="Dev mode · D"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 7 3.5 12l5 5M15.5 7l5 5-5 5"/></svg></button>
           <i class="sep" aria-hidden="true"></i>
           <a class="cv-share" href="#contact">Let’s talk</a>
         </div>
@@ -2248,13 +2327,18 @@
         }
       }, { passive: true });
 
-      /* HERO: a live design canvas.
-         Move (V) drags the PORTFOLIO frame, Hand (H) pans the whole canvas,
-         Layout grid (F) and Comments (C) toggle overlays. */
+      /* HERO: a live design canvas with 10 working tools.
+         Modes (one at a time): Move V, Hand H, Shape O, Pen P, Text T.
+         Toggles: Layout grid F, Comments C, Components K, Dev mode D.
+         Action: Clear drawings E. */
       var CV = $("#home");
       var SEL = $("#cvSel");
       var YOU = $("#cvYou");
+      var INK = $("#cvInk");
+      var PEN = $("#cvPen");
+      var H1 = $("#cvTitle");
       var FINE = matchMedia("(hover: hover) and (pointer: fine)").matches;
+      var MODES = ["move", "hand", "shape", "pen", "text"];
       var tool = "move";
 
       /* the size badge shows the frame's real size, like a design tool would */
@@ -2262,39 +2346,121 @@
         $("#cvSize").textContent = Math.round(SEL.offsetWidth) + " × " + Math.round(SEL.offsetHeight);
       }
       sizeLabel();
-      addEventListener("resize", sizeLabel);
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(sizeLabel);
+      addEventListener("resize", function () { sizeLabel(); devSpecs(); });
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { sizeLabel(); devSpecs(); });
 
       function press(name, on) { $('.cv-bar [data-tool="' + name + '"]').setAttribute("aria-pressed", String(on)); }
+
+      /* Dev mode reads the headline's real computed CSS */
+      function hex(rgb) {
+        var m = rgb.match(/\d+/g);
+        return m ? "#" + m.slice(0, 3).map(function (n) { return (+n).toString(16).padStart(2, "0"); }).join("").toUpperCase() : rgb;
+      }
+      function devSpecs() {
+        var cs = getComputedStyle(H1), fs = parseFloat(cs.fontSize);
+        var rows = [
+          ["font-family", cs.fontFamily.split(",")[0].replace(/"/g, "")],
+          ["font-size", Math.round(fs) + "px"],
+          ["line-height", (parseFloat(cs.lineHeight) / fs).toFixed(2)],
+          ["letter-spacing", cs.letterSpacing],
+          ["color", hex(cs.color)],
+          ["frame", Math.round(SEL.offsetWidth) + " × " + Math.round(SEL.offsetHeight) + ", rotate −2.5°"]
+        ];
+        $("#cvDev").innerHTML = "<b>.cv-h1 — PORTFOLIO</b>" + rows.map(function (r) {
+          return '<span class="k">' + r[0] + '</span>: <span class="v">' + r[1] + "</span>;<br>";
+        }).join("");
+      }
+
+      function clearInk() {
+        var items = [].slice.call(INK.querySelectorAll(".cv-shape, .cv-text, path"));
+        items.forEach(function (el) { el.classList.add("bye"); });
+        setTimeout(function () { items.forEach(function (el) { el.remove(); }); }, RM ? 0 : 320);
+      }
 
       function setTool(t) {
         if (t === "frame") { press("frame", CV.classList.toggle("cols")); return; }
         if (t === "comment") { press("comment", !CV.classList.toggle("nocmt")); return; }
+        if (t === "components") { press("components", !CV.classList.toggle("nomenu")); return; }
+        if (t === "dev") { devSpecs(); press("dev", CV.classList.toggle("dev")); return; }
+        if (t === "eraser") { clearInk(); return; }
         tool = t;
+        MODES.forEach(function (m) {
+          press(m, m === t);
+          CV.classList.toggle("t-" + m, m === t);
+        });
         CV.classList.toggle("hand", t === "hand");
-        press("move", t === "move");
-        press("hand", t === "hand");
       }
 
       $$(".cv-bar [data-tool]").forEach(function (b) {
         b.addEventListener("click", function () { setTool(b.dataset.tool); });
       });
 
-      /* single-key shortcuts, only while the canvas is on screen */
+      /* single-key shortcuts, only while the canvas is on screen and nobody is typing */
       addEventListener("keydown", function (e) {
         if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
-        if (/^(input|textarea|select)$/i.test(e.target.tagName) || $("#md").classList.contains("open")) return;
+        if (e.target.isContentEditable || /^(input|textarea|select)$/i.test(e.target.tagName)) return;
+        if ($("#md").classList.contains("open")) return;
         if (CV.getBoundingClientRect().bottom < innerHeight * 0.4) return;
-        var t = { v: "move", h: "hand", f: "frame", c: "comment" }[e.key.toLowerCase()];
+        var t = { v: "move", h: "hand", f: "frame", o: "shape", p: "pen", t: "text", c: "comment", k: "components", e: "eraser", d: "dev" }[e.key.toLowerCase()];
         if (t) setTool(t);
       });
 
-      /* dragging: Move drags the frame, Hand pans the canvas (mouse and pen only, so touch still scrolls) */
-      var drag = null;
+      /* where a pointer is, in the ink layer's coordinates (it pans with the Hand tool) */
+      function inkPoint(e) {
+        var r = INK.getBoundingClientRect();
+        return { x: e.clientX - r.left, y: e.clientY - r.top };
+      }
+      function onControl(e) { return e.target.closest("a, button, .cv-menu, .cv-cmt, .cv-dev, .cv-text, .cv-bar, .cv-top"); }
+
+      /* Shape and Text work with a click or a tap */
+      var SHAPES = ["circle", "square", "tri", "pill"];
+      var COLORS = ["#d6ff3d", "#ffffff", "#ff6a3d", "#101a4f"];
+      var shapeN = 0;
+      CV.addEventListener("click", function (e) {
+        if (onControl(e)) return;
+        var p = inkPoint(e);
+        if (tool === "shape") {
+          if (INK.querySelectorAll(".cv-shape").length >= 40) INK.querySelector(".cv-shape").remove();
+          var s = document.createElement("i");
+          s.className = "cv-shape " + SHAPES[shapeN % SHAPES.length];
+          s.style.cssText = "left:" + p.x + "px;top:" + p.y + "px;--s:" + (64 + Math.random() * 56).toFixed(0) + "px;--c:" + COLORS[shapeN % COLORS.length] + ";--r:" + (Math.random() * 40 - 20).toFixed(0) + "deg";
+          INK.appendChild(s);
+          shapeN++;
+        } else if (tool === "text") {
+          var t = document.createElement("span");
+          t.className = "cv-text";
+          t.contentEditable = "true";
+          t.spellcheck = false;
+          t.setAttribute("role", "textbox");
+          t.setAttribute("aria-label", "Your text on the canvas");
+          t.textContent = "Hello";
+          t.style.left = p.x + "px";
+          t.style.top = p.y - 21 + "px";
+          INK.appendChild(t);
+          t.focus();
+          getSelection().selectAllChildren(t);
+          t.addEventListener("keydown", function (k) {
+            if (k.key === "Enter" || k.key === "Escape") { k.preventDefault(); t.blur(); }
+          });
+          t.addEventListener("blur", function () { if (!t.textContent.trim()) t.remove(); });
+        }
+      });
+
+      /* Move drags the frame, Hand pans, Pen draws (mouse and pen only, so touch still scrolls) */
+      var drag = null, stroke = null;
       CV.addEventListener("pointerdown", function (e) {
-        if (e.pointerType === "touch" || e.button !== 0) return;
-        if (e.target.closest("a, button, .cv-menu, .cv-cmt")) return;
-        var mode = tool === "hand" ? "hand" : e.target.closest("#cvSel") ? "move" : null;
+        if (e.button !== 0 || onControl(e)) return;
+        if (tool === "pen" && e.pointerType !== "touch") {
+          var p = inkPoint(e);
+          stroke = { el: document.createElementNS("http://www.w3.org/2000/svg", "path"), d: "M" + p.x + " " + p.y };
+          stroke.el.setAttribute("d", stroke.d);
+          PEN.appendChild(stroke.el);
+          CV.setPointerCapture(e.pointerId);
+          e.preventDefault();
+          return;
+        }
+        if (e.pointerType === "touch") return;
+        var mode = tool === "hand" ? "hand" : tool === "move" && e.target.closest("#cvSel") ? "move" : null;
         if (!mode) return;
         var el = mode === "hand" ? CV : SEL;
         var px = mode === "hand" ? "--pnx" : "--dx";
@@ -2315,12 +2481,19 @@
           YOU.style.transform = "translate(" + (e.clientX - r.left + 16) + "px," + (e.clientY - r.top + 20) + "px)";
           YOU.classList.add("on");
         }
+        if (stroke) {
+          var p = inkPoint(e);
+          stroke.d += " L" + p.x.toFixed(1) + " " + p.y.toFixed(1);
+          stroke.el.setAttribute("d", stroke.d);
+          return;
+        }
         if (!drag) return;
         drag.el.style.setProperty(drag.px, drag.bx + e.clientX - drag.x + "px");
         drag.el.style.setProperty(drag.py, drag.by + e.clientY - drag.y + "px");
       });
 
       function endDrag() {
+        stroke = null;
         if (!drag) return;
         drag.el.classList.remove("drag");
         drag = null;
